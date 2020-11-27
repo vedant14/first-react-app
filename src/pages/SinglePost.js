@@ -65,31 +65,22 @@ export default ({ match, history }) => {
 								url={post.image && post.image.url}
 								key={post.id}
 							/>
-							{user && (
-								<React.Fragment>
-									<button onClick={handleDelete}>
-										Delete this post
-									</button>
-									<button onClick={() => setEdit(true)}>
-										Edit This Post
-									</button>
-
-									{edit && (
-										<form onSubmit={handleEditSubmit}>
-											<input
-												value={description}
-												onChange={(event) =>
-													setDescription(
-														event.target.value
-													)
-												}
-												placeholder="New Description"
-											/>
-											<button>Confirm</button>
-										</form>
-									)}
-								</React.Fragment>
-							)}
+                            {user && user.user && post && post.author && post.author.id === user.user.id &&
+                                <React.Fragment>
+                                    <button onClick={handleDelete}>Delete this Post</button>
+                                    <button onClick={() => setEdit(true)}>Edit this Post</button>
+                                    {edit &&
+                                        <form onSubmit={handleEditSubmit}>
+                                            <input 
+                                                value={description}
+                                                onChange={(event) => setDescription(event.target.value)} 
+                                                placeholder="New description" 
+                                            />
+                                            <button>Confirm</button>
+                                        </form>
+                                    }
+                                </React.Fragment>
+                            }
 						</React.Fragment>
 					)}
 					{!post.id && <p> 404 - Post not found </p>}
