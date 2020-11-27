@@ -1,11 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { UserContext } from "../context/UserContext";
 
 export default () => {
 	const [description, setDescription] = useState("");
 	const [file, setFile] = useState(null);
 	const [error, setError] = useState("");
+
+	const { user } = useContext(UserContext);
+
 	const handleSubmit = async (event) => {
 		event.preventDefault();
+
+		if (!user) {
+			setError("Please log in");
+			return;
+		}
 
 		if (!description) {
 			setError("Please add a description");
@@ -23,6 +32,9 @@ export default () => {
 		try {
 			const response = await fetch("http://localhost:1337/posts", {
 				method: "Post",
+				headers: {
+					Authorization: `Bearer ${user.jwt}`,
+				},
 				body: formData,
 			});
 			const data = await response.json();

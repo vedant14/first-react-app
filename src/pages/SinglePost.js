@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
 import Post from "../components/Post";
-import {UserContext} from '../context/UserContext'
+import { UserContext } from "../context/UserContext";
 
 export default ({ match, history }) => {
 	const { id } = match.params;
-	const {user, setUser} = useContext(UserContext)
-	console.log("user", user)
-	console.log("setUser", setUser)
+	const { user, setUser } = useContext(UserContext);
+	console.log("user", user);
+	console.log("setUser", setUser);
 
 	const [post, setPost] = useState({});
 	const [loading, setLoading] = useState(true);
@@ -28,6 +28,7 @@ export default ({ match, history }) => {
 			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
+				Authorization: `Bearer ${user.jwt}`,
 			},
 			body: JSON.stringify({
 				description,
@@ -40,6 +41,9 @@ export default ({ match, history }) => {
 	const handleDelete = async () => {
 		const response = await fetch(`http://localhost:1337/posts/${id}`, {
 			method: "DELETE",
+			headers: {
+				Authorization: `Bearer ${user.jwt}`,
+			},
 		});
 		const data = await response.json();
 		history.push("/");
@@ -61,23 +65,30 @@ export default ({ match, history }) => {
 								url={post.image && post.image.url}
 								key={post.id}
 							/>
-							<button onClick={handleDelete}>
-								Delete this post
-							</button>
-							<button onClick={() => setEdit(true)}>
-								Edit This Post
-							</button>
-							{edit && (
-								<form onSubmit={handleEditSubmit}>
-									<input
-										value={description}
-										onChange={(event) =>
-											setDescription(event.target.value)
-										}
-										placeholder="New Description"
-									/>
-									<button>Confirm</button>
-								</form>
+							{user && (
+								<React.Fragment>
+									<button onClick={handleDelete}>
+										Delete this post
+									</button>
+									<button onClick={() => setEdit(true)}>
+										Edit This Post
+									</button>
+
+									{edit && (
+										<form onSubmit={handleEditSubmit}>
+											<input
+												value={description}
+												onChange={(event) =>
+													setDescription(
+														event.target.value
+													)
+												}
+												placeholder="New Description"
+											/>
+											<button>Confirm</button>
+										</form>
+									)}
+								</React.Fragment>
 							)}
 						</React.Fragment>
 					)}

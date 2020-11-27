@@ -8,6 +8,7 @@ import Create from "./pages/Create";
 import SinglePost from "./pages/SinglePost"
 import Login from "./pages/Login"
 import Signup from "./pages/Signup"
+
 function App() {
   return (
     <div className="App">
