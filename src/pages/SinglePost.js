@@ -1,72 +1,142 @@
-import React, { useState, useEffect, useContext } from "react";
-import Post from "../components/Post";
-import { UserContext } from "../context/UserContext";
+import React, {useState, useEffect, useContext} from 'react'
+import Post from '../components/Post'
 
-export default ({ match, history }) => {
-	const { id } = match.params;
-	const { user, setUser } = useContext(UserContext);
-	console.log("user", user);
-	console.log("setUser", setUser);
+import {UserContext} from '../context/UserContext'
+import {LikesContext} from '../context/LikesContext'
 
-	const [post, setPost] = useState({});
-	const [loading, setLoading] = useState(true);
-	const [edit, setEdit] = useState(false);
-	const [description, setDescription] = useState("");
+export default ({match, history}) => {
 
-	const fetchPost = async () => {
-		const response = await fetch(`http://localhost:1337/posts/${id}`);
-		const data = await response.json();
-		setPost(data);
-		setDescription(data.description);
-		setLoading(false);
-	};
+    const {id} = match.params
+    console.log("id", id)
 
-	const handleEditSubmit = async (event) => {
-		event.preventDefault();
-		console.log("handleEditSubmit");
-		const response = await fetch(`http://localhost:1337/posts/${id}`, {
-			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${user.jwt}`,
-			},
-			body: JSON.stringify({
-				description,
-			}),
-		});
-		const data = await response.json();
-		fetchPost();
-	};
+    const {user, setUser} = useContext(UserContext)
+    console.log("user", user)
+    console.log("setUser", setUser)
 
-	const handleDelete = async () => {
-		const response = await fetch(`http://localhost:1337/posts/${id}`, {
-			method: "DELETE",
-			headers: {
-				Authorization: `Bearer ${user.jwt}`,
-			},
-		});
-		const data = await response.json();
-		history.push("/");
-	};
-	useEffect(() => {
-		fetchPost();
-	}, []);
+    const {likesGiven, reloader} = useContext(LikesContext)
 
-	return (
-		<div>
-			{loading && <p>Loading...</p>}
-			{!loading && (
-				<React.Fragment>
-					{post.id && (
-						<React.Fragment>
-							<Post
-								description={post.description}
-								likes={post.likes}
-								url={post.image && post.image.url}
-								key={post.id}
-							/>
+    const isPostAlreadyLiked = (() => {
+        return likesGiven && likesGiven.find(like => like.post && like.post.id == id)
+    })()
+
+    console.log("isPostAlreadyLiked", isPostAlreadyLiked)
+
+    const [post, setPost] = useState({})
+    const [loading, setLoading] = useState(true)
+    const [edit, setEdit] = useState(false)
+
+    //Used for the edit form
+    const [description, setDescription] = useState('')
+
+    const fetchPost = async () => {
+        const response = await fetch(`http://localhost:1337/posts/${id}`)
+        const data = await response.json()
+
+        console.log("data", data)
+        setPost(data)
+        setDescription(data.description)
+        setLoading(false)
+    }
+
+    const handleDelete = async () => {
+        const response = await fetch(`http://localhost:1337/posts/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${user.jwt}`
+            }
+        })
+        const data = await response.json()
+        history.push('/')
+    }
+
+    const handleEditSubmit = async (event) => {
+        event.preventDefault()
+        console.log("handleEditSubmit")
+
+        const response = await fetch(`http://localhost:1337/posts/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.jwt}`
+            },
+            body: JSON.stringify({
+                description
+            })
+        })
+
+        const data = await response.json()
+        fetchPost()
+        console.log("handleEditSubmit data", data)
+
+    }
+
+    const handleLike = async () => {
+        try{
+            const response = await fetch('http://localhost:1337/likes', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${user.jwt}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    post: parseInt(id)
+                })
+            })
+            fetchPost()
+            reloader()
+        } catch(err){
+            console.log("Exception ", err)
+        }
+    }
+
+    const handleRemoveLike = async () => {
+        try{
+            const response = await fetch(`http://localhost:1337/likes/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${user.jwt}`
+                }
+            })
+            fetchPost()
+            reloader()
+        } catch(err){
+            console.log("Exception ", err)
+        }
+    }
+
+    useEffect(() => {
+        fetchPost()
+    }, [])
+
+    return (
+        <div>
+            {loading &&
+                <p>Loading...</p>
+            }
+            {!loading &&
+                <>
+                    {post.id &&
+                        <>
+                            <Post 
+                                description={post.description}
+                                url={post.image && post.image.url}
+                                likes={post.likes}
+                            />
+
+                            {user &&
+                                <>
+                                    {isPostAlreadyLiked && 
+                                        <button onClick={handleRemoveLike}>Remove Like</button>
+                                    }
+
+                                    {!isPostAlreadyLiked &&
+                                        <button onClick={handleLike}>Like</button>
+                                    }
+                                </>
+                            }
+
                             {user && user.user && post && post.author && post.author.id === user.user.id &&
-                                <React.Fragment>
+                                <>
                                     <button onClick={handleDelete}>Delete this Post</button>
                                     <button onClick={() => setEdit(true)}>Edit this Post</button>
                                     {edit &&
@@ -79,13 +149,17 @@ export default ({ match, history }) => {
                                             <button>Confirm</button>
                                         </form>
                                     }
-                                </React.Fragment>
+                                </>
                             }
-						</React.Fragment>
-					)}
-					{!post.id && <p> 404 - Post not found </p>}
-				</React.Fragment>
-			)}
-		</div>
-	);
-};
+
+                        </>
+                    }
+                    {!post.id &&
+                        <p>404 - not found</p>
+                    }
+                </>
+            }
+        </div>
+    )
+
+}

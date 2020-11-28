@@ -34,7 +34,6 @@ export default ({history}) => {
 				return; //stop execution
 			}
 			setUser(data);
-			console.log("user", data)
 		} catch (err) {
 			setError("Something went wrong" + err);
 		}
